@@ -30,7 +30,7 @@ function (
     $scope.getRole = RoleHelper.getRole;
 
     $scope.filter = {
-        role: "",
+        role: '',
         q: null
     };
 
@@ -49,10 +49,8 @@ function (
         }
     };
 
-
     handleResponseErrors = function (errorResponse) {
-        var errors = _.pluck(errorResponse.data && errorResponse.data.errors, 'message');
-        errors && Notify.showAlerts(errors);
+        Notify.showApiErrors(errorResponse);
     };
 
     checkAndNotifyAboutManipulateOwnUser = function (translationKey) {
@@ -75,15 +73,20 @@ function (
         $translate('notify.user.bulk_destroy_confirm', {
             count: $scope.selectedUsers.length
         }).then(function (message) {
-            if ($window.confirm(message)) {
+            Notify.showConfirm(message).then(function () {
                 var calls = [];
                 angular.forEach($scope.selectedUsers, function (userId) {
                     calls.push(UserEndpoint.delete({ id: userId }).$promise);
                 });
 
-                $q.all(calls).then($scope.filterRole, handleResponseErrors)
+                $q.all(calls).then(function () {
+                    $translate('notify.user.bulk_destroy_success').then(function (message) {
+                        Notify.showNotificationSlider(message);
+                    });
+                    getUsersForPagination();
+                }, handleResponseErrors)
                 .finally($scope.filterRole);
-            }
+            }, function () {});
         });
     };
 
@@ -96,14 +99,19 @@ function (
             count: $scope.selectedUsers.length,
             role:  role.display_name
         }).then(function (message) {
-            if ($window.confirm(message)) {
+            Notify.showConfirm(message).then(function () {
                 var calls = [];
                 angular.forEach($scope.selectedUsers, function (userId) {
-                    calls.push(UserEndpoint.update({ id: userId }, { id: userId, role: role.name }).$promise);
+                    calls.push(UserEndpoint.saveCache({ id: userId, role: role.name }).$promise);
                 });
-                $q.all(calls).then($scope.filterRole, handleResponseErrors)
+                $q.all(calls).then(function () {
+                    $translate('notify.user.bulk_role_change_success', {role_name: role.name}).then(function (message) {
+                        Notify.showNotificationSlider(message);
+                    });
+                    getUsersForPagination();
+                }, handleResponseErrors)
                 .finally($scope.filterRole);
-            }
+            });
         });
     };
 
@@ -118,7 +126,7 @@ function (
 
     // --- start: definitions
     getUsersForPagination = function () {
-        UserEndpoint.query({
+        UserEndpoint.queryFresh({
             offset: ($scope.currentPage - 1) * $scope.itemsPerPage,
             limit: $scope.itemsPerPage,
             role: $scope.filter.role,
@@ -132,7 +140,7 @@ function (
     $scope.pageChanged = getUsersForPagination;
     $scope.applyFilters = function () {
         getUsersForPagination();
-    }
+    };
     // --- end: definitions
 
 

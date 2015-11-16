@@ -8,6 +8,7 @@ module.exports = [
     'TagEndpoint',
     'Notify',
     '_',
+    'Util',
 function (
     $scope,
     $rootScope,
@@ -17,7 +18,8 @@ function (
     RoleHelper,
     TagEndpoint,
     Notify,
-    _
+    _,
+    Util
 ) {
     $translate('tag.edit_tag').then(function (title) {
         $scope.title = title;
@@ -27,16 +29,19 @@ function (
     $scope.types = multiTranslate(['tag.types.category', 'tag.types.status']);
     $scope.roles = RoleHelper.roles();
 
-    $scope.tag = TagEndpoint.get({id: $routeParams.id});
+    $scope.tag = TagEndpoint.getFresh({id: $routeParams.id});
     $scope.processing = false;
 
     $scope.saveTag = function (tag) {
         $scope.processing = true;
-        TagEndpoint.update({id: $routeParams.id}, tag, function () {
+        // @todo: change this to use original api allowing callback on save and delete cache
+        TagEndpoint.saveCache(tag).$promise.then(function (result) {
             $rootScope.goBack();
+            $translate('notify.tag.save_success', {name: tag.tag}).then(function (message) {
+                Notify.showNotificationSlider(message);
+            });
         }, function (errorResponse) { // error
-            var errors = _.pluck(errorResponse.data && errorResponse.data.errors, 'message');
-            errors && Notify.showAlerts(errors);
+            Notify.showApiErrors(errorResponse);
             $scope.processing = false;
         });
     };

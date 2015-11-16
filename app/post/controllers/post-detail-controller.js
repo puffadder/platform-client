@@ -1,8 +1,10 @@
 module.exports = [
     '$scope',
+    '$rootScope',
     'post',
     '$translate',
     '$q',
+    '$filter',
     '$location',
     'PostEndpoint',
     'ConfigEndpoint',
@@ -15,11 +17,15 @@ module.exports = [
     'Leaflet',
     'leafletData',
     '_',
+    'RoleHelper',
+    'Notify',
 function (
     $scope,
+    $rootScope,
     post,
     $translate,
     $q,
+    $filter,
     $location,
     PostEndpoint,
     ConfigEndpoint,
@@ -31,10 +37,23 @@ function (
     Maps,
     L,
     leafletData,
-    _
+    _,
+    RoleHelper,
+    Notify
 ) {
     $scope.post = post;
     $scope.mapDataLoaded = false;
+    $scope.availableRoles = RoleHelper.roles();
+    $scope.publishedFor = function () {
+        if ($scope.post.status === 'draft') {
+            return 'post.publish_for_you';
+        }
+        if (!_.isEmpty($scope.post.published_to)) {
+            return RoleHelper.getRole($scope.post.published_to[0]);
+        }
+
+        return 'post.publish_for_everyone';
+    };
 
     // Set page title to post title, if there is one available.
     if (post.title && post.title.length) {
@@ -75,7 +94,7 @@ function (
 
     // Replace tags with full tag object
     $scope.post.tags = $scope.post.tags.map(function (tag) {
-        return TagEndpoint.get({id: tag.id});
+        return TagEndpoint.get({id: tag.id, ignore403: true});
     });
 
     $scope.showType = function (type) {
@@ -142,27 +161,156 @@ function (
 
     $scope.deletePost = function () {
         $translate('notify.post.destroy_confirm').then(function (message) {
-            if (window.confirm(message)) {
+            Notify.showConfirm(message).then(function () {
                 PostEndpoint.delete({ id: $scope.post.id }).$promise.then(function () {
-                    $location.path('/');
+                    $translate(
+                        'notify.post.destroy_success',
+                        {
+                            name: $scope.post.title
+                        }).then(function (message) {
+                            Notify.showNotificationSlider(message);
+                            $location.path('/');
+                        });
                 });
-            }
+            });
         });
     };
 
-    $scope.editableCollections = CollectionEndpoint.editableByMe();
-
-    var addToCollection = function (collectionId) {
-        CollectionEndpoint.addPost({'collectionId': collectionId, 'id': $scope.post.id});
+    $scope.refreshCollections = function () {
+        $scope.editableCollections = CollectionEndpoint.editableByMe();
     };
-    $scope.$watch(function () {
-        return $scope.addToCollectionModel;
-    }, function (collectionId) {
-        if (collectionId) {
-            addToCollection(collectionId);
+    $scope.refreshCollections();
+    $scope.postInCollection = function (collection) {
+        return _.contains($scope.post.sets, String(collection.id));
+    };
+
+    $scope.toggleCreateCollection = function () {
+        $scope.showNewCollectionInput = !$scope.showNewCollectionInput;
+    };
+
+    $scope.toggleCollection = function (selectedCollection) {
+        if (_.contains($scope.post.sets, String(selectedCollection.id))) {
+            $scope.removeFromCollection(selectedCollection);
+        } else {
+            $scope.addToCollection(selectedCollection);
         }
-        $scope.addToCollectionModel = "";
-    });
+    };
+
+    $scope.addToCollection = function (selectedCollection) {
+        var collectionId = selectedCollection.id, collection = selectedCollection.name;
+
+        CollectionEndpoint.addPost({'collectionId': collectionId, 'id': $scope.post.id})
+            .$promise.then(function () {
+                $translate('notify.collection.add_to_collection', {collection: collection})
+                .then(function (message) {
+                    $scope.post.sets.push(String(collectionId));
+                    Notify.showNotificationSlider(message);
+                });
+            }, function (errorResponse) {
+                Notify.showApiErrors(errorResponse);
+            });
+    };
+
+    $scope.removeFromCollection = function (selectedCollection) {
+        var collectionId = selectedCollection.id, collection = selectedCollection.name;
+
+        CollectionEndpoint.removePost({'collectionId': collectionId, 'id': $scope.post.id})
+        .$promise
+        .then(function () {
+            $translate('notify.collection.removed_from_collection', {collection: collection})
+            .then(function (message) {
+                $scope.post.sets = _.without($scope.post.sets, String(collectionId));
+                Notify.showNotificationSlider(message);
+            });
+        }, function (errorResponse) {
+            Notify.showApiErrors(errorResponse);
+        });
+    };
+    /*
+    scope.searchCollections = function (query) {
+        CollectionEndpoint.query(query)
+        .$promise
+        .then(function (result) {
+        }, function (errorResponse) {
+            Notify.showApiErrors(errorResponse);
+        });
+    };
+
+    scope.clearSearch = function() {
+        scope.editableCollection = scope.editableCollectionCopy;
+    };
+    */
+    $scope.createNewCollection = function (collectionName) {
+        var collection = {
+            'name': collectionName,
+            'user_id': $rootScope.currentUser.userId
+        };
+        CollectionEndpoint.save(collection)
+        .$promise
+        .then(function (collection) {
+            $scope.toggleCreateCollection();
+            $scope.newCollection = '';
+            $scope.refreshCollections();
+            $scope.addToCollection(collection);
+        }, function (errorResponse) {
+            Notify.showApiErrors(errorResponse);
+        });
+    };
+
+    $scope.publishPostTo = function () {
+        // first check if stages required have been marked complete
+        var requiredStages = _.where($scope.stages, {required: true}),
+            errors = [];
+
+        _.each(requiredStages, function (stage) {
+            // if this stage isn't complete, add to errors
+            if (_.indexOf($scope.post.completed_stages, stage.id) === -1) {
+                errors.push($filter('translate')('post.modify.incomplete_step', { stage: stage.label }));
+            }
+        });
+
+        if (errors.length) {
+            Notify.showAlerts(errors);
+            return;
+        }
+
+        if ($scope.publishRole) {
+            if ($scope.publishRole === 'draft') {
+                $scope.post.status = 'draft';
+            } else {
+                $scope.post.status = 'published';
+                $scope.post.published_to = [$scope.publishRole];
+            }
+        } else {
+            $scope.post.status = 'published';
+            $scope.post.published_to = [];
+        }
+
+        PostEndpoint.update($scope.post).
+        $promise
+        .then(function () {
+            var message = post.status === 'draft' ? 'notify.post.set_draft' : 'notify.post.publish_success';
+            $translate(message, { role: $scope.publishRole })
+            .then(function (message) {
+                Notify.showNotificationSlider(message);
+            });
+        }, function (errorResponse) {
+            Notify.showApiErrors(errorResponse);
+        });
+    };
+
+    $scope.postIsPublishedTo = function () {
+        if ($scope.post.status === 'draft') {
+            return 'draft';
+        }
+
+        if (!_.isEmpty($scope.post.published_to)) {
+            return $scope.post.published_to[0];
+        }
+
+        return '';
+    };
+    $scope.publishRole = $scope.postIsPublishedTo();
 
 }];
 

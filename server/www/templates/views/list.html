@@ -22,24 +22,32 @@
                 <span>Export</span>
             </button> -->
 
-            <button type="button" class="button-secondary icon-only-when-small alt trash" ng-disabled="selectedItems.length <= 0" ng-click="deleteSelectedPosts()">
+
+            <button type="button" class="button-secondary icon-only-when-small alt trash" ng-disabled="selectedItems <= 0" ng-click="deleteSelectedPosts()">
                 <span translate>post.post_actions.delete</span>
             </button>
+
         </div>
+
     </div>
 
     <post-preview
         ng-repeat="post in posts"
         can-select="userHasBulkActionPermissions()"
-        selection-model
-        selection-model-type="checkbox"
-        selection-model-mode="multiple-additive"
-        selection-model-selected-items="selectedItems"
-        selection-model-cleanup-strategy="deselect"
+        editable-collections="editableCollections"
         post="post"
     >
     </post-preview>
 
-    <pagination ng-model="currentPage" total-items="totalItems" ng-change="pageChanged()" max-size="5" rotate="false"></pagination>
+    <h5 ng-show="posts.length == 0 && hasFilters()" translate>post.no_search_results</h5>
+    <div ng-show="posts.length == 0 && ! hasFilters()">
+        <h5 translate>post.no_posts_yet</h5>
+        <br />
+        <a class="button button-create" ng-href="/posts/create">
+            <span translate>post.add_first_post</span>
+        </a>
+    </div>
+
+    <pagination ng-show="posts.length > 0" ng-model="currentPage" total-items="totalItems" ng-change="pageChanged()" max-size="5" rotate="false"></pagination>
 
 </div>

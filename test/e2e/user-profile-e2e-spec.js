@@ -6,8 +6,8 @@ var getLastUrlPart = function (url) {
     return match[1];
 };
 
-var userMenuLinkSelector = '.header .user-admin .toggle-wrapper',
-userMenuSelector = '.header .user-admin .toggle-content',
+var userMenuLinkSelector = '.header .user-admin [dropdown-toggle]',
+userMenuSelector = '.header .user-admin .dropdown-menu',
 userProfileLinkSelector = '.header a.my-profile';
 
 
@@ -15,12 +15,12 @@ describe('user profile management', function () {
 
     describe('as a loggedin user', function () {
 
-        var userMenuLink;
+        var userMenuLink, userMenu;
 
         beforeEach(function () {
             browser.get('/login');
 
-            element(by.model('username')).sendKeys('admin');
+            element(by.model('email')).sendKeys('admin@ush.com');
             element(by.model('password')).sendKeys('admin');
             element(by.css('button[type="submit"]')).click();
         });
@@ -38,7 +38,7 @@ describe('user profile management', function () {
                 userMenuLink = element(by.css(userMenuLinkSelector));
                 userMenu = element(by.css(userMenuSelector));
                 userMenuLink.click();
-                browser.wait(userMenu.isDisplayed);
+                browser.wait(userMenu.isDisplayed, 500);
 
                 userProfileLink = element(by.css(userProfileLinkSelector));
             });
@@ -67,8 +67,6 @@ describe('user profile management', function () {
             var
             fullnameFieldSelector = 'input[type="text"][name="full_name"]',
             fullnameField,
-            usernameFieldSelector = 'input[type="text"][name="username"]',
-            usernameField,
             emailFieldSelector = 'input[type="email"][name="email"]',
             emailField,
             passwordFieldSelector = 'input[type="password"][name="password"]',
@@ -87,7 +85,6 @@ describe('user profile management', function () {
                 browser.get('/users/me');
                 browser.wait(element(by.css('.user-profile')).isDisplayed);
 
-                usernameField = element(by.css(usernameFieldSelector));
                 fullnameField = element(by.css(fullnameFieldSelector));
                 emailField = element(by.css(emailFieldSelector));
 
@@ -96,15 +93,12 @@ describe('user profile management', function () {
                 changePasswordLink = element(by.css(changePasswordLinkSelector));
             });
 
-            it('should show the editable fields for full name, username and email with the correct values prefilled', function () {
+            it('should show the editable fields for full name and email with the correct values prefilled', function () {
                 expect(fullnameField.isDisplayed()).toBe(true);
                 expect(fullnameField.getAttribute('value')).toBe('Admin Joe');
 
-                expect(usernameField.isDisplayed()).toBe(true);
-                expect(usernameField.getAttribute('value')).toBe('admin');
-
                 expect(emailField.isDisplayed()).toBe(true);
-                expect(emailField.getAttribute('value')).toBe('admin@example.com');
+                expect(emailField.getAttribute('value')).toBe('admin@ush.com');
             });
 
             it('should show "Save Profile" buttons', function () {

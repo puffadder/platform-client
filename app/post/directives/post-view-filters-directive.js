@@ -12,9 +12,10 @@ function (
         replace: true,
         scope: {
             halfWidth: '=',
+            hasAside: '=',
             isLoading: '='
         },
-        templateUrl: 'templates/partials/post-view-filters.html',
+        templateUrl: 'templates/posts/post-view-filters.html',
         link: function ($scope, $element, $attrs) {
             $scope.filter = {};
             $scope.globalFilter = GlobalFilter;
@@ -135,7 +136,7 @@ function (
                     defaults = GlobalFilter.getDefaults();
 
                 angular.forEach(defaults, function (value, key) {
-                    if ($scope.filter[key] && defaults[key] != $scope.filter[key]) {
+                    if ($scope.filter[key] && defaults[key] !== $scope.filter[key]) {
                         showControls = true;
                     }
                 });

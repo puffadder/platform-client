@@ -24,7 +24,7 @@ function (
             formId: '@',
             formTemplate: '@'
         },
-        templateUrl: 'templates/partials/form-editor.html',
+        templateUrl: 'templates/settings/forms/form-editor.html',
         link: function ($scope, $element, $attrs) {
             // If we're editing an existing form,
             // load the form info and all the fields.
@@ -44,41 +44,50 @@ function (
 
             $scope.saveFormSettings = function (form) {
                 FormEndpoint
-                .update(form)
+                .saveCache(form)
                 .$promise
                 .then(function () {
+                    $translate('notify.form.edit_form_success', { name: form.name }).then(function (message) {
+                        Notify.showNotificationSlider(message);
+                    });
+
                     $scope.isSettingsOpen = false;
                 }, function (errorResponse) {
-                    var errors = _.pluck(errorResponse.data && errorResponse.data.errors, 'message');
-                    errors && Notify.showAlerts(errors);
+                    Notify.showApiErrors(errorResponse);
                 });
             };
 
             $scope.deleteForm = function (stage) {
                 $translate('notify.form.delete_form_confirm')
                 .then(function (message) {
-                    if (Notify.showConfirm(message)) {
+                    Notify.showConfirm(message).then(function () {
                         FormEndpoint.delete({
                             id: $scope.form.id
                         }).$promise.then(function () {
+                            $translate('notify.form.destroy_form_success', { name: $scope.form.name }).then(function (message) {
+                                Notify.showNotificationSlider(message);
+                            });
                             $location.url('/settings/forms');
                         });
-                    }
+                    });
                 });
             };
 
             $scope.deleteStage = function (stage, $index) {
                 $translate('notify.form.delete_stage_confirm')
                 .then(function (message) {
-                    if (Notify.showConfirm(message)) {
+                    Notify.showConfirm(message).then(function () {
                         FormStageEndpoint.delete({
                             formId: $scope.form.id,
                             id: stage.id
                         }).$promise.then(function () {
                             // Remove stage from scope, binding should take care of the rest
+                            $translate('notify.form.destroy_stage_success', {name: stage.label}).then(function (message) {
+                                Notify.showNotificationSlider(message);
+                            });
                             $scope.form.stages.splice($index, 1);
                         });
-                    }
+                    });
                 });
             };
 
@@ -99,12 +108,12 @@ function (
                 stage.priority = stage.priority + increment;
 
                 // Save stage
-                FormStageEndpoint.update(_.extend(stage, {
+                FormStageEndpoint.saveCache(_.extend(stage, {
                     formId: $scope.form.id
                 }));
 
                 // Save adjacent stage
-                FormStageEndpoint.update(_.extend(next, {
+                FormStageEndpoint.saveCache(_.extend(next, {
                     formId: $scope.form.id
                 }));
 
@@ -122,7 +131,7 @@ function (
                 var lastPriority = $scope.form.stages.length ? _.last($scope.form.stages).priority : 0;
 
                 FormStageEndpoint
-                .save(_.extend(stage, {
+                .saveCache(_.extend(stage, {
                     formId: $scope.form.id,
                     priority: lastPriority + 1
                 }))
@@ -130,10 +139,12 @@ function (
                 .then(function (stage) {
                     $scope.isNewStageOpen = false;
                     $scope.newStage = {};
+                    $translate('notify.form.save_stage_success', {name: stage.label}).then(function (message) {
+                        Notify.showNotificationSlider(message);
+                    });
                     $location.url('/settings/forms/' + $scope.form.id + '/stages/' + stage.id);
                 }, function (errorResponse) {
-                    var errors = _.pluck(errorResponse.data && errorResponse.data.errors, 'message');
-                    errors && Notify.showAlerts(errors);
+                    Notify.showApiErrors(errorResponse);
                 });
             };
             // End manage stage

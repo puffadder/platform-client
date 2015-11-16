@@ -32,7 +32,7 @@ function (
 
             $scope.roles = RoleHelper.roles();
             $scope.views = PostViewHelper.views();
-            
+
             // Set default view for Collection to be Map
             if (!$scope.collection) {
                 $scope.collection = {};
@@ -41,7 +41,7 @@ function (
             }
             $scope.cpyCollection = _.clone($scope.collection);
 
-            $scope.$watch( function () {
+            $scope.$watch(function () {
                 return $scope.isOpen.data;
             }, function (newValue, oldValue) {
                 if (!newValue) {
@@ -67,25 +67,23 @@ function (
                     $scope.isOpen.data = false;
                     $rootScope.$broadcast('event:collection:update');
                 }, function (errorResponse) {
-                    var errors = _.pluck(errorResponse.data && errorResponse.data.errors, 'message');
-                    errors && Notify.showAlerts(errors);
+                    Notify.showApiErrors(errorResponse);
                 });
             };
 
             $scope.deleteCollection = function () {
                 $translate('notify.collection.delete_collection_confirm')
                 .then(function (message) {
-                    if (Notify.showConfirm(message)) {
+                    Notify.showConfirm(message).then(function () {
                         CollectionEndpoint.delete({
                             collectionId: $scope.collection.id
                         }).$promise.then(function () {
                             $location.url('/');
                             $rootScope.$broadcast('event:collection:update');
                         }, function (errorResponse) {
-                            var errors = _.pluck(errorResponse.data && errorResponse.data.errors, 'message');
-                            errors && Notify.showAlerts(errors);
+                            Notify.showApiErrors(errorResponse);
                         });
-                    }
+                    });
                 });
             };
         }

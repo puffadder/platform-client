@@ -41,10 +41,10 @@ function (
 
             $scope.cpySavedSearch = _.clone($scope.savedSearch);
 
-            $scope.$watch( function () {
+            $scope.$watch(function () {
                 return $scope.isOpen.data;
             }, function (newValue, oldValue) {
-                if (!newValue) {
+                if (newValue !== oldValue) {
                     $scope.cpySavedSearch = _.clone($scope.savedSearch);
                 }
             });
@@ -63,23 +63,21 @@ function (
                     $scope.isOpen.data = false;
                     $rootScope.$broadcast('event:savedSearch:update');
                 }, function (errorResponse) {
-                    var errors = _.pluck(errorResponse.data && errorResponse.data.errors, 'message');
-                    errors && Notify.showAlerts(errors);
+                    Notify.showApiErrors(errorResponse);
                 });
             };
 
             $scope.deleteSavedSearch = function () {
                 $translate('notify.savedsearch.delete_savedsearch_confirm')
                 .then(function (message) {
-                    if (Notify.showConfirm(message)) {
+                    Notify.showConfirm(message).then(function () {
                         SavedSearchEndpoint.delete({ id: $scope.savedSearch.id }).$promise.then(function () {
                             $location.url('/');
                             $rootScope.$broadcast('event:savedSearch:update');
                         }, function (errorResponse) {
-                            var errors = _.pluck(errorResponse.data && errorResponse.data.errors, 'message');
-                            errors && Notify.showAlerts(errors);
+                            Notify.showApiErrors(errorResponse);
                         });
-                    }
+                    });
                 });
             };
         }

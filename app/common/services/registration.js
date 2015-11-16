@@ -14,9 +14,9 @@ function (
 
     return {
 
-        register: function (email, username, password) {
+        register: function (realname, email, password) {
             var payload = {
-                username: username,
+                realname: realname,
                 email: email,
                 password: password
             },

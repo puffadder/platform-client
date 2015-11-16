@@ -6,6 +6,7 @@ function (
         '$q',
         '$translate',
         'PostEndpoint',
+        'CollectionEndpoint',
         'Session',
         'Notify',
         '_',
@@ -14,6 +15,7 @@ function (
             $q,
             $translate,
             PostEndpoint,
+            CollectionEndpoint,
             Session,
             Notify,
             _
@@ -33,8 +35,7 @@ function (
                 });
             },
             handleResponseErrors = function (errorResponse) {
-                var errors = _.pluck(errorResponse.data && errorResponse.data.errors, 'message');
-                errors && Notify.showAlerts(errors);
+                Notify.showApiErrors(errorResponse);
             };
 
             // whenever the filters changes, update the current list of posts
@@ -46,19 +47,37 @@ function (
                 }
             });
 
+            var refreshCollections = function () {
+                $scope.editableCollections = CollectionEndpoint.editableByMe();
+            };
+
+            $scope.$on('event:post:selection', function (event, post) {
+                (post.selected ? $scope.selectedItems++ : $scope.selectedItems--);
+                (post.selected ? $scope.selectedPosts.push(post) : $scope.selectedPosts = _.without($scope.selectedPosts, _.findWhere($scope.selectedPosts, {id: post.id})));
+            });
+
+            $scope.$on('event:collection:update', function () {
+                refreshCollections();
+            });
+
+            refreshCollections();
+
             $scope.deleteSelectedPosts = function () {
+
                 $translate('notify.post.destroy_confirm').then(function (message) {
-                    if (window.confirm(message)) {
+                    Notify.showConfirm(message).then(function () {
                         // ask server to delete selected posts
                         // and refetch posts from server
                         var deletePostsPromises = _.map(
-                            $scope.selectedItems,
+                            $scope.selectedPosts,
                             function (post) {
+                                $scope.selectedPosts = _.without($scope.selectedPosts, _.findWhere($scope.selectedPosts, {id: post.id}));
+                                $scope.selectedItems--;
                                 return PostEndpoint.delete({ id: post.id }).$promise;
                             });
                         $q.all(deletePostsPromises).then(getPostsForPagination, handleResponseErrors)
                         .finally(getPostsForPagination);
-                    }
+                    });
                 });
             };
 
@@ -77,6 +96,8 @@ function (
                 $event && $event.preventDefault();
                 _.forEach($scope.posts, function (post) {
                     post.selected = false;
+                    $scope.selectedPosts = _.without($scope.selectedPosts, _.findWhere($scope.selectedPosts, {id: post.id}));
+                    $scope.selectedItems--;
                 });
             };
 
@@ -84,17 +105,27 @@ function (
                 $event && $event.preventDefault();
                 _.forEach($scope.posts, function (post) {
                     post.selected = true;
+                    $scope.selectedPosts.push(post);
+                    $scope.selectedItems++;
                 });
             };
 
             $scope.allSelectedOnCurrentPage = function ($event) {
-                return $scope.selectedItems.length === $scope.posts.length;
+                return $scope.selectedItems === $scope.posts.length;
+            };
+
+            $scope.hasFilters = function () {
+                if ($scope.filters.status !== 'all') {
+                    return true;
+                }
+                return !_.isEmpty(_.omit(_.omit($scope.filters, 'within_km'), 'status'));
             };
 
             // --- start: initialization
             $scope.pageChanged = getPostsForPagination;
             $scope.currentPage = 1;
-            $scope.selectedItems = [];
+            $scope.selectedItems = 0;
+            $scope.selectedPosts = [];
             $scope.itemsPerPageOptions = [10, 20, 50];
             $scope.itemsPerPage = $scope.itemsPerPageOptions[0];
 

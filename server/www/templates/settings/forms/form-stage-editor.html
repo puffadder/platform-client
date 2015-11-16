@@ -10,7 +10,7 @@
         <div class="form-info">
             <label class="input-label" translate>form.step_name</label>
             <input type="text" ng-model="form.stages[currentStageId].label">
-            <label>
+            <label class="checkbox-label">
                 <input type="checkbox" ng-model="form.stages[currentStageId].required">
                 <span translate>form.step_required</span>
             </label>
@@ -36,14 +36,14 @@
                 <button type="button" class="button-secondary icon-only alt upvote" ng-click="changePriority(attribute, -1)"></button>
                 <button type="button" class="button-secondary icon-only alt downvote" ng-click="changePriority(attribute, +1)"></button>
             </div>
-            <h3><a ng-model="attribute.label" dropdown-toggle>{{ attribute.label }}</a></h3>
+            <h3><a class="dropdown toggle-content-trigger ng-model="attribute.label" dropdown-toggle>{{ attribute.label }}</a></h3>
             <div class="actions">
-                <button type="button" class="button-secondary icon-only-when-small edit toggle-content-trigger" dropdown-toggle>
+                <button type="button" class="button-secondary icon-only-when-small edit dropdown toggle-content-trigger" dropdown-toggle>
                     <span translate>nav.edit</span>
                 </button>
-                <button type="button" class="button-secondary icon-only alt trash" ng-click="deleteAttribute(attribute, $index)"></button>
+                <button type="button" class="button-destructive icon-only alt trash" ng-click="deleteAttribute(attribute, $index)"></button>
             </div>
-            <form class="toggle-content" dropdown-menu>
+            <form class="init toggle-content" dropdown-menu>
                 <label class="input-label" translate>form.field_name</label>
                 <input type="text" value="{{ attribute.label }}" placeholder="{{ 'form.field_name_placeholder'|translate }}" ng-model="attribute.label" ng-change="labelChanged(attribute)">
 
@@ -70,7 +70,7 @@
                     <label class="input-label" translate>form.field_allowed_relation_post_type</label>
                     <ul name="visible-to">
                         <li ng-repeat="relationForm in availableForms | filter : filterNotCurrentForm">
-                            <label>
+                            <label class="checkbox-label">
                                 <input type="checkbox" checklist-model="attribute.config.input.form" checklist-value="relationForm.id" />
                                 {{relationForm.name}}
                             </label>
@@ -96,7 +96,7 @@
                 </div>
                 -->
                 <p class="clearfix">
-                    <label>
+                    <label class="checkbox-label">
                         <input type="checkbox" ng-model="attribute.required">
                         <span translate>form.field_required</span>
                     </label>
@@ -148,7 +148,7 @@
         <div class="form-info">
             <label class="input-label" translate>form.step_name</label>
             <input type="text" ng-model="newStage.label">
-            <label>
+            <label class="checkbox-label">
                 <input type="checkbox" ng-model="newStage.required">
                 <span translate>form.step_required</span>
             </label>

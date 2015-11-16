@@ -3,7 +3,9 @@ angular.module('ushahidi.common', [
 	'ushahidi.common.accordion',
 	'ushahidi.common.offcanvas',
 	'ushahidi.common.modal',
-	'ushahidi.common.sticky-sidebar'
+  'ushahidi.common.notification-slider',
+	'ushahidi.common.sticky-sidebar',
+    'ushahidi.common.chart'
 ])
 
 .service('Authentication', require('./services/authentication.js'))
@@ -15,6 +17,7 @@ angular.module('ushahidi.common', [
 .service('FormStageEndpoint', require('./services/endpoints/form-stages.js'))
 .service('TagEndpoint', require('./services/endpoints/tag.js'))
 .service('DataProviderEndpoint', require('./services/endpoints/data-providers.js'))
+.service('FontAwesomeIcons', require('./services/endpoints/FontAwesomeIcons.js'))
 .service('RoleHelper', require('./services/role-helper.js'))
 .service('PostViewHelper', require('./services/view-helper.js'))
 .service('Config', require('./services/config.js'))
@@ -27,14 +30,19 @@ angular.module('ushahidi.common', [
 .service('Languages', require('./services/languages.js'))
 .service('Registration', require('./services/registration.js'))
 .service('PasswordReset', require('./services/password-reset.js'))
+.service('IconManager', require('./services/icon-manager.js'))
 
 .controller('navigation', require('./controllers/navigation.js'))
 .controller('PageMetadata', require('./controllers/page-metadata.js'))
+.controller('notifier', require('./controllers/notifier.js'))
+
+.directive('iconPicker', require('./directives/iconpicker.js'))
+.directive('firstTimeConfig', require('./directives/first-time-config.js'))
 
 .config(require('./configs/authentication-interceptor.js'))
 .config(require('./configs/locale-config.js'))
 .config(require('./configs/ui-bootstrap-template-decorators.js'))
-.config(require('./configs/gravatar-config.js'))
+.config(require('./configs/cache-config.js'))
 
 .config(require('./common-routes.js'))
 
@@ -48,4 +56,6 @@ require('./directives/dropdown.js');
 require('./directives/accordion.js');
 require('./directives/offcanvas.js');
 require('./directives/modal.js');
+require('./directives/notification-slider.js');
 require('./directives/sticky-sidebar.js');
+require('./directives/chart.js');

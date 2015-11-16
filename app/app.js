@@ -14,18 +14,19 @@ require('angular-sanitize');
 require('angular-filter');
 require('angular-local-storage');
 require('checklist-model/checklist-model');
-require('angular-gravatar/build/md5');
-require('angular-gravatar/build/angular-gravatar');
 require('selection-model/dist/selection-model');
 require('ngGeolocation/ngGeolocation');
 require('ng-showdown/src/ng-showdown');
 window.d3 = require('d3'); // Required for nvd3
+window.dc = require('dc'); // Required for charting used in activity page
 require('./common/wrapper/nvd3-wrapper');
 require('angular-nvd3/src/angular-nvd3');
+require('angular-cache');
 
 // Load ushahidi modules
 require('./common/common-module.js');
 require('./post/post-module.js');
+require('./activity/activity-module.js');
 require('./setting/setting-module.js');
 require('./set/set-module.js');
 require('./user-profile/user-profile-module.js');
@@ -48,7 +49,9 @@ var backendUrl = window.ushahidi.backendUrl = window.ushahidi.backendUrl || proc
         'stats',
         'layers',
         'config',
-        'messages'
+        'messages',
+        'notifications',
+        'contacts'
     ];
 
 angular.module('app',
@@ -60,17 +63,18 @@ angular.module('app',
         'pascalprecht.translate',
         'ui.bootstrap.pagination',
         'datePicker',
-        'ui.gravatar',
         'leaflet-directive',
         'angular.filter',
         'showdown',
         'ngGeolocation',
         'nvd3',
         'selectionModel',
+        'angular-cache',
         'ushahidi.common',
         'ushahidi.posts',
         'ushahidi.tools',
         'ushahidi.sets',
+        'ushahidi.activity',
         'ushahidi.user-profile'
     ])
 
@@ -84,11 +88,18 @@ angular.module('app',
         CLAIMED_USER_SCOPES : claimedAnonymousScopes.concat('dataproviders')
     })
 
+    .config(['$compileProvider', function ($compileProvider) {
+        $compileProvider.debugInfoEnabled(false);
+    }])
+
     .factory('_', function () {
         return require('underscore/underscore');
     })
     .factory('d3', function () {
         return window.d3;
+    })
+    .factory('dc', function () {
+        return window.dc;
     })
     .factory('URI', function () {
         return require('URIjs/src/URI.js');

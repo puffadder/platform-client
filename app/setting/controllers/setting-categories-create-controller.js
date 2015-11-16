@@ -30,13 +30,19 @@ function (
 
     $scope.saveTag = function (tag) {
         $scope.processing = true;
-        var response = TagEndpoint.save(tag, function () {
+        TagEndpoint.saveCache(tag).$promise.then(function (response) {
             if (response.id) {
+                $translate(
+                    'notify.tag.save_success',
+                    {
+                        name: tag.tag
+                    }).then(function (message) {
+                    Notify.showNotificationSlider(message);
+                });
                 $location.path('/settings/categories/' + response.id);
             }
         }, function (errorResponse) { // error
-            var errors = _.pluck(errorResponse.data && errorResponse.data.errors, 'message');
-            errors && Notify.showAlerts(errors);
+            Notify.showApiErrors(errorResponse);
             $scope.processing = false;
         });
     };
