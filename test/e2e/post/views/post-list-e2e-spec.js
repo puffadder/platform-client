@@ -66,21 +66,26 @@ describe('post detail interaction', function () {
                 });
 
                 describe('when clicking the delete button', function () {
+                    var confirmModalText;
+
                     beforeEach(function () {
                         var deleteButton = element(by.css(deleteButtonSelector));
                         deleteButton.click();
-                        browser.sleep(500);
+
+                        // Wait for modal to appear
+                        confirmModalText = element(by.css('#confirm-modal-text'));
+                        browser.wait(confirmModalText.isDisplayed, 500);
                     });
 
                     it('should ask to confirm the post\'s deletion', function () {
-                        expect(element(by.css('#confirm-modal-text')).getText()).toEqual('Are you sure you want to delete this post?');
+                        expect(confirmModalText.getText()).toEqual('Are you sure you want to delete this post?');
                     });
 
                     describe('when the user clicks ok', function () {
                         beforeEach(function () {
                             var confirmModal = element(by.css('button#confirm-modal-ok'));
                             confirmModal.click();
-                            browser.sleep(500);
+                            browser.sleep(100);
                         });
 
                         it('should show a deletion confirmation message', function () {
@@ -119,19 +124,23 @@ describe('post detail interaction', function () {
                 });
 
                 describe('when clicking delete', function () {
+                    var confirmModalText;
                     beforeEach(function () {
                         var deleteButton = element(by.css(deleteButtonSelector));
                         deleteButton.click();
-                        browser.sleep(500);
+
+                        // Wait for modal to appear
+                        confirmModalText = element(by.css('#confirm-modal-text'));
+                        browser.wait(confirmModalText.isDisplayed, 500);
                     });
 
                     it('should ask to confirm deletion', function () {
-                        expect(element(by.css('#confirm-modal-text')).getText()).toEqual('Are you sure you want to delete this post?');
+                        expect(confirmModalText.getText()).toEqual('Are you sure you want to delete this post?');
                         describe('when clicking ok', function () {
                             beforeEach(function () {
                                 var confirmModal = element(by.css('button#confirm-modal-ok'));
                                 confirmModal.click();
-                                browser.sleep(500);
+                                browser.sleep(100);
                             });
 
                             it('should show a deletion confirmation message', function () {
@@ -185,7 +194,7 @@ describe('post detail interaction', function () {
                     beforeEach(function () {
                         var collectionInput = collectionMenu.all(by.css(collectionItem)).get(0);
                         collectionInput.click();
-                        browser.sleep(500);
+                        browser.sleep(100);
                     });
 
                     it('should add the post to a collection', function () {
@@ -198,7 +207,7 @@ describe('post detail interaction', function () {
                     beforeEach(function () {
                         var collectionInput = collectionMenu.all(by.css(collectionItem)).get(1);
                         collectionInput.click();
-                        browser.sleep(500);
+                        browser.sleep(100);
                     });
 
                     it('should remove the post from the collection', function () {
@@ -225,7 +234,7 @@ describe('post detail interaction', function () {
                         collectionInput.sendKeys('new test collection');
                         createCollectionButton = collectionMenu.element(by.css(createCollectionButton));
                         createCollectionButton.click();
-                        browser.sleep(500);
+                        browser.sleep(100);
                         var confirmMessage = element(by.css(confirmationMessageSelector));
                         expect(confirmMessage.getInnerHtml()).toEqual('Post has been added to new test collection');
                     });
